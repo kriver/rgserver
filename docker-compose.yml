@@ -2,7 +2,7 @@ dbdata:
   image: postgres:9.4
   command: true
 dbbackup:
-  image: busybox
+  image: alpine
   volumes_from:
     - dbdata
   command: true
@@ -10,18 +10,27 @@ db:
   build: postgres
   volumes_from:
     - dbdata
-app:
-  build: app
+matchmaker:
+  build: matchmaker
   volumes:
-    - app:/usr/src/app
+    - matchmaker:/usr/src/app
+    - matchlog:/var/log/robot/matches
+  links:
+    - db
+  command: './restart'
+webapp:
+  build: webapp
+  volumes:
+    - webapp:/usr/src/app
   links:
     - db
 server:
   image: nginx:1.9
   volumes:
     - static:/usr/local/static
+    - matchlog:/usr/local/matchlog
     - nginx:/etc/nginx/conf.d
   ports:
     - "8000:80"
   links:
-    - app
+    - webapp

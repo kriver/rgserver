@@ -1,2 +1,3 @@
 *.pyc
-app/sessions/*
+webapp/session/*
+matchlog/*
