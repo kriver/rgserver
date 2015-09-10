@@ -12,16 +12,17 @@ import traceback
 
 from rgkit.settings import settings
 
-MAP_FILENAME = pkg_resources.resource_filename(
-    'rgkit', 'maps/default.py')
-def load_map(map_file):
-    map_data = ast.literal_eval(open(MAP_FILENAME).read())
+def load_map():
+    map_filename = pkg_resources.resource_filename(
+        'rgkit', 'maps/default.py')
+    map_data = ast.literal_eval(open(map_filename).read())
     settings.init_map(map_data)
 
 
 def proxy_process_routine(user_code, queue_in, queue_out, queue_output):
     start_time = time.time()
-    queue_output.put('Starting {} at {}.\n'.format(os.getpid(), start_time))
+    pid = os.getpid()
+    queue_output.put('Starting {} at {}.\n'.format(pid, start_time))
 
     class Logger:
         def write(self, data):
@@ -55,14 +56,14 @@ def proxy_process_routine(user_code, queue_in, queue_out, queue_output):
         # counting on iptables to restrict network access for `nobody`
         def drop_privileges(uid_name='nobody'):
             uid = pwd.getpwnam(uid_name).pw_uid
-            limit_resources()
+            #limit_resources()
 
             os.chroot('jail')
             os.chdir('jail')
             os.setgroups([])
             os.umask(0)
             os.setuid(uid)
-            os.nice(10)  # Lower priority
+            os.nice(5)  # Lower priority
 
             disable_modules(
                 'ctypes',
@@ -78,8 +79,6 @@ def proxy_process_routine(user_code, queue_in, queue_out, queue_output):
             time.sleep = lambda s: 0
 
         def make_user_robot(code, mod):
-            global settings
-
             try:
                 exec code in mod.__dict__
             except:
@@ -96,11 +95,16 @@ def proxy_process_routine(user_code, queue_in, queue_out, queue_output):
                     return bot
                 return None
 
+        out.write('Starting queue.\n')
         for data in iter(queue_in.get, None):
             if 'query' in data:
-                load_map('rgkit/maps/default.py')
+                out.write('Starting query.\n')
+                load_map()
+                out.write('Starting mod.\n')
                 mod = imp.new_module('usercode')
+                out.write('Dropping privileges.\n')
                 drop_privileges()
+                out.write('Making.\n')
                 robot = make_user_robot(user_code, mod)
                 queue_out.put({'result': 'ok'})
             else:
