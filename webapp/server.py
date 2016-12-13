@@ -33,7 +33,7 @@ settings.init_map(map_data)
 web.config.debug = False
 
 CHALLENGES_LIMITS = 25
-ROBOTS_LIMITS = 3
+ROBOTS_LIMITS = 10
 MAX_NAME_LENGTH = 25
 
 BOT_LIMIT_REACHED_MSG = '''
