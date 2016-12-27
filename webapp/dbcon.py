@@ -1,7 +1,7 @@
 import web
 
 params = {
-    'host': 'db',
+    'host': '',
     'dbn': 'postgres',
     'db': 'robotgame',
     'user': 'robot',
